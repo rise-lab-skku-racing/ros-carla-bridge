@@ -88,7 +88,7 @@ class World(object):
         blueprints = []
         traffic = []
         # blueprint = random.choice(get_actor_blueprints(self.world, 'erp42'+self.speed, self._actor_generation))
-        blueprint = random.choice(get_actor_blueprints(self.world, 'erp42npc15', self._actor_generation))
+        blueprint = random.choice(get_actor_blueprints(self.world, 'erp42_15km', self._actor_generation))
 
         if blueprint.has_attribute('terramechanics'):
             blueprint.set_attribute('terramechanics', 'true')
@@ -223,7 +223,7 @@ def main():
         help='Activate synchronous mode execution')
     argparser.add_argument(
         '--max_vehicles',
-        default=55,
+        default=2,
         type=int,
         help='max vehicles to spawn (default: 50)')
     argparser.add_argument(
