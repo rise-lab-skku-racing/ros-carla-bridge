@@ -10,9 +10,9 @@
             "id": "actor_list"
         },
         {
-            "type": "vehicle.unmannedsolution.erp42npc23",
+            "type": "vehicle.benz.mercedesnpc",
             "id": "npc_vehicle",
-            "spawn_point": {"x": 18.161913, "y": -40.5, "z": 0.3, "roll": 0.0, "pitch": 0.0, "yaw": 90.0},
+            "spawn_point": {"x": 18.2, "y": -36.00, "z": 0.6, "roll": 0.0, "pitch": 0.0, "yaw": 90.0},
             "sensors": 
             [
                 {

@@ -1,0 +1,31 @@
+{
+	"npc list": ["npc1", "npc2", "npc3", "npc4"],
+    "npc1": {
+        "speed": 15,
+        "point": -1,
+        "x": 18.161913,
+        "y": 36,
+        "z": 0.05,
+        "roll": 0,
+        "pitch": 0,
+        "yaw": -90
+    },
+    "npc2": {
+        "speed": 15,
+        "point": -1,
+        "x": 22.161913,
+        "y": 39,
+        "z": 0.05,
+        "roll": 0,
+        "pitch": 0,
+        "yaw": -90
+    },
+    "npc3": {
+        "speed": 15,
+        "point": 9
+    },
+    "npc4": {
+        "speed": 15,
+        "point": 4
+    }
+}

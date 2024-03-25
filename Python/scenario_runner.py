@@ -25,8 +25,9 @@ import logging
 import math
 import random
 import time
+import random
 
-
+import json
 
 def get_actor_blueprints(world, filter, generation):
     bps = world.get_blueprint_library().filter(filter)
@@ -62,8 +63,7 @@ class World(object):
     def __init__(self, carla_world, args):
         self.world = carla_world
         self.sync = args.sync
-        self.max_vehicles = args.max_vehicles
-        self.speed = str(args.speed)
+        self.scenario = args.scenario
         try:
             self.map = self.world.get_map()
         except RuntimeError as error:
@@ -74,61 +74,62 @@ class World(object):
         self.player = None
         self.players = []
         self._actor_generation = args.generation
-        self.start()
-        # self.world.on_tick(hud.on_world_tick)
+        self.cleannpc()
+        self.spawn()
         self.constant_velocity_enabled = False
 
-    def start(self):
+    def cleannpc(self):
+        actor_list = self.world.get_actors()
+        for actor in actor_list.filter('*npc*'):
+            if actor.id != 1:
+                actor.destroy()
+            else:
+                continue
 
-        spawn_points = self.world.get_map().get_spawn_points()
-        max_vehicles = self.max_vehicles
-        max_vehicles = min([max_vehicles, len(spawn_points)])
-
-        # Get a erp42 blueprint.
-        blueprints = []
-        traffic = []
-        # blueprint = random.choice(get_actor_blueprints(self.world, 'erp42'+self.speed, self._actor_generation))
-        blueprint = random.choice(get_actor_blueprints(self.world, 'erp42npc15', self._actor_generation))
-
-        if blueprint.has_attribute('terramechanics'):
-            blueprint.set_attribute('terramechanics', 'true')
-        if blueprint.has_attribute('color'):
-            color = random.choice(blueprint.get_attribute('color').recommended_values)
-            blueprint.set_attribute('color', color)
-        if blueprint.has_attribute('driver_id'):
-            driver_id = random.choice(blueprint.get_attribute('driver_id').recommended_values)
-            blueprint.set_attribute('driver_id', driver_id)
-        if blueprint.has_attribute('is_invincible'):
-            blueprint.set_attribute('is_invincible', 'true')
-
-        for i in range(max_vehicles):
-            blueprint.set_attribute('role_name', 'npc'+self.speed+str(i))
-            blueprints.append(blueprint)
-
+    def spawn(self):
+        
         spawn_points = self.map.get_spawn_points()
 
-        for i, spawn_point in enumerate(random.sample(spawn_points, max_vehicles)):
-            temp = self.world.try_spawn_actor(blueprints[i], spawn_point)
+        with open('scenario_start/scenario_' + self.scenario + '.json', 'r') as f:
+            npc_list = json.load(f)
+
+        waypoint = spawn_points[1]
+
+        # randid = random.randrange(10,50)
+
+        print(npc_list["npc list"])
+
+        for i, npc in enumerate(npc_list["npc list"]):
+            blueprint = (get_actor_blueprints(self.world, 'erp42npcreal' + str(npc_list[npc]["speed"]), self._actor_generation)[0])
+            blueprint.set_attribute('role_name', 'npc' + str(npc_list[npc]["speed"]))
+            
+            if npc_list[npc]["point"] < 0:
+                waypoint.location.x = npc_list[npc]["x"]
+                waypoint.location.y = npc_list[npc]["y"]
+                waypoint.location.z = npc_list[npc]["z"]
+                waypoint.rotation.roll = npc_list[npc]["roll"]
+                waypoint.rotation.pitch = npc_list[npc]["pitch"]
+                waypoint.rotation.yaw = npc_list[npc]["yaw"]
+            else:
+                waypoint = spawn_points[npc_list[npc]["point"]]
+            
+            temp = self.world.try_spawn_actor(blueprint, waypoint)
+            # temp.set_attribute("id", str(10 + i))
             self.show_vehicle_telemetry = False
             if temp is not None:
                 self.players.append(temp)
 
         for npc in self.players:
-            npc.set_autopilot(True)
+            npc.set_autopilot(False)
 
         if self.sync:
             self.world.tick()
         else:
             self.world.wait_for_tick()
 
-    def destroy(self):
-        for i in range(len(self.players)):
-            try:
-                self.players[i].destroy()
-                time.sleep(0.05)
-            except:
-                continue
-
+    def StartAutopilot(self):
+        for npc in self.players:
+            npc.set_autopilot(True)
 
 def spawn_loop(args):
     world = None
@@ -150,25 +151,32 @@ def spawn_loop(args):
             traffic_manager = client.get_trafficmanager()
             traffic_manager.set_synchronous_mode(True)
 
-        world = World(sim_world, args)
-        # controller = KeyboardControl(world, args.autopilot)
-
-        # print(world.get_speed_set_vehicle())
-        # traffic_manager.vehicle_percentage_speed_difference(1, -20.0) 
-
-        if args.sync:
-            sim_world.tick()
+        if args.destroy:
+            actor_list = sim_world.get_actors()
+            for actor in actor_list:
+                if actor.id != 1:
+                    actor.destroy()
+                else:
+                    continue
         else:
-            sim_world.wait_for_tick()
+            world = World(sim_world, args)
 
-        while True:
             if args.sync:
                 sim_world.tick()
-            # clock.tick_busy_loop(60)
-            # if controller.parse_events(client, world, clock, args.sync):
-                # return
-            # world.tick(clock)
-            # world.render(display)
+            else:
+                sim_world.wait_for_tick()
+
+            while True:
+                user_input = input('Press key to play scenario:\n\tenter\tstart\n\trespawn')
+                if user_input == '':
+                    world.StartAutopilot()
+                elif user_input == 'r':
+                    world.cleannpc()
+                    world.spawn()
+                else:
+                    continue
+                if args.sync:
+                    sim_world.tick()
 
     finally:
 
@@ -176,8 +184,7 @@ def spawn_loop(args):
             sim_world.apply_settings(original_settings)
 
         if world is not None:
-            world.destroy()
-            time.sleep(0.05)
+            world.cleannpc()
 
 def main():
     argparser = argparse.ArgumentParser(
@@ -203,14 +210,9 @@ def main():
         action='store_true',
         help='enable autopilot')
     argparser.add_argument(
-        '--res',
-        metavar='WIDTHxHEIGHT',
-        default='1280x720',
-        help='window resolution (default: 1280x720)')
-    argparser.add_argument(
         '--generation',
         metavar='G',
-        default='2',
+        default='4',
         help='restrict to certain actor generation (values: "1","2","All" - default: "2")')
     argparser.add_argument(
         '--gamma',
@@ -222,18 +224,16 @@ def main():
         action='store_true',
         help='Activate synchronous mode execution')
     argparser.add_argument(
-        '--max_vehicles',
-        default=100,
-        type=int,
-        help='max vehicles to spawn (default: 50)')
+        '-s', '--scenario',
+        default='1',
+        type=str,
+        help='scenario number')
     argparser.add_argument(
-        '--speed',
-        default=20,
-        type=int,
-        help='speed of vehicles to spawn (default: 20)')
+        '-d', '--destroy',
+        default=False,
+        type=bool,
+        help='destroy all actors')
     args = argparser.parse_args()
-
-    args.width, args.height = [int(x) for x in args.res.split('x')]
 
     log_level = logging.DEBUG if args.debug else logging.INFO
     logging.basicConfig(format='%(levelname)s: %(message)s', level=log_level)

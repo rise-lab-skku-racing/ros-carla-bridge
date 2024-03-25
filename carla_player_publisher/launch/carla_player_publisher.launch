@@ -1,0 +1,12 @@
+<!-- -->
+<launch>
+  <node pkg="carla_player_publisher" type="carla_player_publisher.py" name="$(anon carla_player_publisher)" output="screen">
+    <remap from="~object"            to="/carla/object_list"/>
+    <remap from="~local_object"      to="/carla/local_object_list"/>
+  </node>
+
+
+
+</launch>
+
+

@@ -40,4 +40,9 @@
     <param name="town" value="$(arg town)"/>
     <param name="ego_vehicle_role_name" value="$(arg ego_vehicle_role_name)"/>
   </node>
+
+    <node pkg="carla_player_publisher" type="carla_player_publisher.py" name="$(anon carla_player_publisher)" output="screen">
+    <remap from="~object"            to="/carla/object_list"/>
+  </node>
+  
 </launch>
