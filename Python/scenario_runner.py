@@ -100,7 +100,7 @@ class World(object):
         print(npc_list["npc list"])
 
         for i, npc in enumerate(npc_list["npc list"]):
-            blueprint = (get_actor_blueprints(self.world, 'erp42npcreal' + str(npc_list[npc]["speed"]), self._actor_generation)[0])
+            blueprint = (get_actor_blueprints(self.world, 'erp42npc' + str(npc_list[npc]["speed"]), self._actor_generation)[0])
             blueprint.set_attribute('role_name', 'npc' + str(npc_list[npc]["speed"]))
             
             if npc_list[npc]["point"] < 0:
@@ -167,7 +167,7 @@ def spawn_loop(args):
                 sim_world.wait_for_tick()
 
             while True:
-                user_input = input('Press key to play scenario:\n\tenter\tstart\n\trespawn')
+                user_input = input('Press key to play scenario:\n\tenter\tstart\n\tr\trespawn')
                 if user_input == '':
                     world.StartAutopilot()
                 elif user_input == 'r':
